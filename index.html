@@ -76,7 +76,7 @@
 
 <div class="chat-container">
     <div class="chat-box" id="chatBox">
-        <div class="message ai">Hello! I am MeeboGPT. How can I help you today?</div>
+        <div class="message ai">Hello! I am MeeboGPT. The direct network bridge is active. How can I help you today?</div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Type your message here...">
@@ -85,7 +85,7 @@
 </div>
 
 <script type="module">
-    // 🧩 Obfuscated API key structure using your confirmed token
+    // 🧩 Obfuscated API key configuration
     const part1 = "AQ.Ab8RN6I3xa018flfcH"; 
     const part2 = "7PyiJnTN2k29OeAM6JkuGbD8tIR1_5Dw";
     const API_KEY = part1 + part2; 
@@ -114,13 +114,15 @@
         chatHistory.push({ role: "user", parts: [{ text: text }] });
 
         try {
-            const url = "https://googleapis.com";
+            // 🌐 New Automatic Proxy Layer: Encodes the target API call dynamically
+            const targetUrl = "https://googleapis.com";
+            const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
             
-            const response = await fetch(url, {
+            const response = await fetch(proxyUrl, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
-                    "x-goog-api-key": API_KEY 
+                    "x-goog-api-key": API_KEY
                 },
                 body: JSON.stringify({ contents: chatHistory })
             });
@@ -131,16 +133,13 @@
             }
 
             const data = await response.json();
-            
-            // 🎯 Fixed structure array index mapping
             const responseText = data.candidates[0].content.parts[0].text;
             
             appendMessage(responseText, "ai");
-
             chatHistory.push({ role: "model", parts: [{ text: responseText }] });
 
         } catch (error) {
-            console.error("Gemini Connection Error:", error);
+            console.error("Connection Error:", error);
             appendMessage(`System Error: ${error.message}`, "ai");
         }
     }
