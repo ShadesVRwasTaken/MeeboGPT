@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini AI Chatbot</title>
+    <title>MeeboGPT - Gemini Chatbot</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -71,21 +71,12 @@
             cursor: pointer; 
         }
     </style>
-    
-    <!-- Load the official Google Gemini SDK via ESM -->
-    <script type="importmap">
-    {
-        "imports": {
-            "@google/generative-ai": "https://esm.run"
-        }
-    }
-    </script>
 </head>
 <body>
 
 <div class="chat-container">
     <div class="chat-box" id="chatBox">
-        <div class="message ai">Hello! I am your Gemini assistant. How can I help you today?</div>
+        <div class="message ai">Hello! I am MeeboGPT. Powered by your new AQ key format. How can I help you?</div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Type your message here...">
@@ -94,23 +85,17 @@
 </div>
 
 <script type="module">
-    import { GoogleGenerativeAI } from "@google/generative-ai";
-
-    // 🧩 Obfuscation technique: Splitting your specific key right down the middle
-    const part1 = "AQ.Ab8RN6I3xa018flfcH7PyiJn"; 
-    const part2 = "TN2k29OeAM6JkuGbD8tIR1_5Dw";
-
-    // Reassemble the key dynamically at runtime
+    // 🧩 Obfuscate your exact AQ key by splitting it down the center
+    const part1 = "AQ.Ab8RN6I3xa018flfcH"; 
+    const part2 = "7PyiJnTN2k29OeAM6JkuGbD8tIR1_5Dw";
     const API_KEY = part1 + part2; 
-
-    // Initialize the Gemini SDK using the unified key string
-    const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const chatSession = model.startChat({ history: [] });
 
     const chatBox = document.getElementById("chatBox");
     const userInput = document.getElementById("userInput");
     const sendBtn = document.getElementById("sendBtn");
+
+    // Array to keep track of the conversation flow manually for the REST API
+    let chatHistory = [];
 
     function appendMessage(text, sender) {
         const msgDiv = document.createElement("div");
@@ -124,16 +109,40 @@
         const text = userInput.value.trim();
         if (!text) return;
 
+        // Render user message instantly
         appendMessage(text, "user");
         userInput.value = "";
 
+        // Track user message in history array
+        chatHistory.push({ role: "user", parts: [{ text: text }] });
+
         try {
-            const result = await chatSession.sendMessage(text);
-            const responseText = await result.response.text();
+            // Direct native API call using query parameters which successfully processes AQ keys
+            const url = `https://googleapis.com{API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: chatHistory })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || "API Connection Refused");
+            }
+
+            const data = await response.json();
+            const responseText = data.candidates[0].content.parts[0].text;
+            
+            // Render Gemini's reply
             appendMessage(responseText, "ai");
+
+            // Track AI response in history to maintain multi-turn chat flow
+            chatHistory.push({ role: "model", parts: [{ text: responseText }] });
+
         } catch (error) {
-            console.error("Gemini Error:", error);
-            appendMessage("Error generating response. Your key structure may require Vertex AI or specialized API initializations.", "ai");
+            console.error("Gemini Native Error:", error);
+            appendMessage(`Error: ${error.message}. Please double check your key configuration.`, "ai");
         }
     }
 
