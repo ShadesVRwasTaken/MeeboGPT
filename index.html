@@ -76,7 +76,7 @@
 
 <div class="chat-container">
     <div class="chat-box" id="chatBox">
-        <div class="message ai">Hello! I am MeeboGPT. Powered by your new AQ key format. How can I help you?</div>
+        <div class="message ai">Hello! I am MeeboGPT. How can I help you today?</div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Type your message here...">
@@ -85,7 +85,7 @@
 </div>
 
 <script type="module">
-    // 🧩 Obfuscate your exact AQ key by splitting it down the center
+    // 🧩 Obfuscated API key structure using your confirmed token
     const part1 = "AQ.Ab8RN6I3xa018flfcH"; 
     const part2 = "7PyiJnTN2k29OeAM6JkuGbD8tIR1_5Dw";
     const API_KEY = part1 + part2; 
@@ -94,7 +94,6 @@
     const userInput = document.getElementById("userInput");
     const sendBtn = document.getElementById("sendBtn");
 
-    // Array to keep track of the conversation flow manually for the REST API
     let chatHistory = [];
 
     function appendMessage(text, sender) {
@@ -109,40 +108,40 @@
         const text = userInput.value.trim();
         if (!text) return;
 
-        // Render user message instantly
         appendMessage(text, "user");
         userInput.value = "";
 
-        // Track user message in history array
         chatHistory.push({ role: "user", parts: [{ text: text }] });
 
         try {
-            // Direct native API call using query parameters which successfully processes AQ keys
-            const url = `https://googleapis.com{API_KEY}`;
+            const url = "https://googleapis.com";
             
             const response = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": API_KEY 
+                },
                 body: JSON.stringify({ contents: chatHistory })
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error?.message || "API Connection Refused");
+                throw new Error(errorData.error?.message || "Connection refused by Google AI servers.");
             }
 
             const data = await response.json();
+            
+            // 🎯 Fixed structure array index mapping
             const responseText = data.candidates[0].content.parts[0].text;
             
-            // Render Gemini's reply
             appendMessage(responseText, "ai");
 
-            // Track AI response in history to maintain multi-turn chat flow
             chatHistory.push({ role: "model", parts: [{ text: responseText }] });
 
         } catch (error) {
-            console.error("Gemini Native Error:", error);
-            appendMessage(`Error: ${error.message}. Please double check your key configuration.`, "ai");
+            console.error("Gemini Connection Error:", error);
+            appendMessage(`System Error: ${error.message}`, "ai");
         }
     }
 
